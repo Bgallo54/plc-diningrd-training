@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, UtensilsCrossed, ClipboardList, Tablet, BookOpen, GraduationCap, Users, Menu, X, ChevronRight } from "lucide-react";
+import { Home, UtensilsCrossed, ClipboardList, Tablet, BookOpen, GraduationCap, Users, Menu, X, ChevronRight, ClipboardCheck } from "lucide-react";
 import { useState } from "react";
 import { modules } from "@/lib/training-data";
 import plcLogo from "@assets/plc-logo.jpg";
@@ -20,6 +20,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       icon: iconMap[m.icon] || BookOpen,
     })),
     { href: "/resident-guide", label: "Resident Customization", icon: Users },
+    { href: "/knowledge-checks", label: "Knowledge Checks", icon: ClipboardCheck },
   ];
 
   return (
@@ -53,8 +54,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             {navItems.map((item) => {
               const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
               const Icon = item.icon;
+              const isAssessment = item.href === "/knowledge-checks";
               return (
                 <li key={item.href}>
+                  {isAssessment && (
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/40 px-3 mt-4 mb-2">Assessment</div>
+                  )}
                   <Link href={item.href} onClick={() => setMobileOpen(false)}>
                     <div className={`
                       flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm cursor-pointer transition-colors

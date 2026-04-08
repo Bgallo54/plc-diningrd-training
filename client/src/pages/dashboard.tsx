@@ -4,7 +4,7 @@ import { modules, getTotalLessons } from "@/lib/training-data";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { GraduationCap, ChevronRight, Play, FileText, Users, Target, Heart, BookOpen, UtensilsCrossed, ClipboardList, Tablet } from "lucide-react";
+import { GraduationCap, ChevronRight, Play, FileText, Users, Target, Heart, BookOpen, UtensilsCrossed, ClipboardList, Tablet, ClipboardCheck } from "lucide-react";
 import type { TrainingProgress } from "@shared/schema";
 import plcLogo from "@assets/plc-logo.jpg";
 
@@ -138,6 +138,24 @@ export default function Dashboard() {
               </p>
             </div>
             <ChevronRight className="w-4 h-4 text-primary/50" />
+          </CardContent>
+        </Card>
+      </Link>
+
+      {/* Knowledge Checks CTA */}
+      <Link href="/knowledge-checks">
+        <Card className="bg-gradient-to-r from-orange-500/5 to-transparent border-orange-500/20 hover:shadow-md transition-shadow cursor-pointer" data-testid="card-knowledge-checks">
+          <CardContent className="p-5 flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400">
+              <ClipboardCheck className="w-5 h-5" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-sm">Knowledge Checks</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Test your understanding with a comprehensive assessment covering all training modules. 80% required to pass.
+              </p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-orange-500/50" />
           </CardContent>
         </Card>
       </Link>

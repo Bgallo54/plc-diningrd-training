@@ -7,6 +7,7 @@ import { AppLayout } from "./components/app-layout";
 import Dashboard from "./pages/dashboard";
 import ModulePage from "./pages/module-page";
 import ResidentGuide from "./pages/resident-guide";
+import KnowledgeChecks from "./pages/knowledge-checks";
 import NotFound from "./pages/not-found";
 
 function AppRouter() {
@@ -16,6 +17,7 @@ function AppRouter() {
         <Route path="/" component={Dashboard} />
         <Route path="/module/:id" component={ModulePage} />
         <Route path="/resident-guide" component={ResidentGuide} />
+        <Route path="/knowledge-checks" component={KnowledgeChecks} />
         <Route component={NotFound} />
       </Switch>
     </AppLayout>
