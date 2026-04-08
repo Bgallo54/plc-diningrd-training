@@ -5,6 +5,7 @@ import plcLogo from "@assets/plc-logo.jpg";
 
 interface CertificateProps {
   staffName: string;
+  community: string;
   scorePercent: number;
   score: number;
   totalQuestions: number;
@@ -14,6 +15,7 @@ interface CertificateProps {
 
 export function CompletionCertificate({
   staffName,
+  community,
   scorePercent,
   score,
   totalQuestions,
@@ -133,6 +135,12 @@ export function CompletionCertificate({
                    data-testid="cert-name">
                 {staffName}
               </div>
+
+              {community && (
+                <div className="text-[10px] lg:text-xs text-gray-500 mb-2 tracking-wide uppercase">
+                  {community}
+                </div>
+              )}
 
               <p className="text-[10px] lg:text-xs text-gray-600 leading-relaxed max-w-[420px] mb-4">
                 Has successfully demonstrated proficiency in the DiningRD platform,

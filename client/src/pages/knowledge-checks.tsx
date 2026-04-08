@@ -18,6 +18,7 @@ type QuizState = "intro" | "active" | "results";
 export default function KnowledgeChecks() {
   const [quizState, setQuizState] = useState<QuizState>("intro");
   const [staffName, setStaffName] = useState("");
+  const [staffCommunity, setStaffCommunity] = useState("");
   const [answers, setAnswers] = useState<Map<string, number>>(new Map());
   const [currentSectionIdx, setCurrentSectionIdx] = useState(0);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
@@ -99,6 +100,7 @@ export default function KnowledgeChecks() {
       const resp = await apiRequest("POST", "/api/assessments", {
         staffId: 0,
         staffName: staffName.trim(),
+        community: staffCommunity.trim(),
         score,
         totalQuestions,
         scorePercent,
@@ -142,7 +144,7 @@ export default function KnowledgeChecks() {
 
   // INTRO STATE
   if (quizState === "intro") {
-    const canStart = staffName.trim().length >= 2;
+    const canStart = staffName.trim().length >= 2 && staffCommunity.trim().length >= 2;
 
     return (
       <div className="p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
@@ -161,20 +163,31 @@ export default function KnowledgeChecks() {
         {/* Name entry */}
         <Card className="border-l-4 border-l-primary">
           <CardContent className="p-5">
-            <div className="mb-4">
-              <Label htmlFor="staff-name" className="text-sm font-semibold mb-2 block">Your Name</Label>
-              <Input
-                id="staff-name"
-                placeholder="Enter your full name"
-                value={staffName}
-                onChange={(e) => setStaffName(e.target.value)}
-                className="max-w-sm"
-                data-testid="input-staff-name"
-              />
-              <p className="text-xs text-muted-foreground mt-1.5">
-                This will appear on your completion certificate if you pass.
-              </p>
+            <div className="grid gap-4 sm:grid-cols-2 mb-4">
+              <div>
+                <Label htmlFor="staff-name" className="text-sm font-semibold mb-2 block">Your Full Name</Label>
+                <Input
+                  id="staff-name"
+                  placeholder="e.g. Sarah Johnson"
+                  value={staffName}
+                  onChange={(e) => setStaffName(e.target.value)}
+                  data-testid="input-staff-name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="staff-community" className="text-sm font-semibold mb-2 block">Community Location</Label>
+                <Input
+                  id="staff-community"
+                  placeholder="e.g. Sunrise Village"
+                  value={staffCommunity}
+                  onChange={(e) => setStaffCommunity(e.target.value)}
+                  data-testid="input-staff-community"
+                />
+              </div>
             </div>
+            <p className="text-xs text-muted-foreground mb-4">
+              Both fields are required and will appear on your completion certificate if you pass.
+            </p>
 
             <h2 className="font-semibold text-sm mb-3">Assessment Overview</h2>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
@@ -457,6 +470,7 @@ export default function KnowledgeChecks() {
       {showCertificate && passed && certificateId && (
         <CompletionCertificate
           staffName={staffName}
+          community={staffCommunity}
           scorePercent={scorePercent}
           score={score}
           totalQuestions={totalQuestions}
