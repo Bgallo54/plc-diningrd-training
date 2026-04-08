@@ -104,6 +104,21 @@ export default function KnowledgeChecks() {
     const now = new Date().toISOString();
     setCompletedAt(now);
 
+    // Build section breakdown for remediation tracking
+    const sectionBreakdown = quizSections.map(section => {
+      let correct = 0;
+      section.questions.forEach(q => {
+        if (answers.get(q.id) === q.correctIndex) correct++;
+      });
+      return {
+        moduleId: section.moduleId,
+        title: section.title,
+        correct,
+        total: section.questions.length,
+        percent: Math.round((correct / section.questions.length) * 100),
+      };
+    });
+
     // Save assessment result to backend
     try {
       const resp = await apiRequest("POST", "/api/assessments", {
@@ -115,6 +130,7 @@ export default function KnowledgeChecks() {
         totalQuestions,
         scorePercent,
         passed,
+        sectionBreakdown,
       });
       const data = await resp.json();
       if (data.certificateId) {

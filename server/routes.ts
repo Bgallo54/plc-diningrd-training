@@ -61,7 +61,7 @@ export function registerRoutes(server: Server, app: Express) {
   });
 
   app.post("/api/assessments", (req, res) => {
-    const { staffId, staffName, staffTitle, community, score, totalQuestions, scorePercent, passed } = req.body;
+    const { staffId, staffName, staffTitle, community, score, totalQuestions, scorePercent, passed, sectionBreakdown } = req.body;
     if (!staffName || score === undefined || !totalQuestions) {
       return res.status(400).json({ error: "staffName, score, and totalQuestions required" });
     }
@@ -77,6 +77,7 @@ export function registerRoutes(server: Server, app: Express) {
       passed: !!passed,
       completedAt: new Date().toISOString(),
       certificateId,
+      sectionBreakdown: sectionBreakdown ? JSON.stringify(sectionBreakdown) : null,
     });
     res.json(result);
   });

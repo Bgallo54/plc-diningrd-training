@@ -30,6 +30,7 @@ export const assessmentResults = sqliteTable("assessment_results", {
   passed: integer("passed", { mode: "boolean" }).notNull(),
   completedAt: text("completed_at").notNull(),
   certificateId: text("certificate_id"),
+  sectionBreakdown: text("section_breakdown"),
 });
 
 export const insertTrainingProgressSchema = createInsertSchema(trainingProgress).omit({ id: true });

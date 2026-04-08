@@ -47,3 +47,4 @@ sqlite.exec(`
 // Add columns if they don't exist (for existing databases)
 try { sqlite.exec(`ALTER TABLE assessment_results ADD COLUMN staff_title TEXT NOT NULL DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE assessment_results ADD COLUMN community TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE assessment_results ADD COLUMN section_breakdown TEXT`); } catch {}

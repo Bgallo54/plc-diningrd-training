@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,17 +15,46 @@ import {
 import {
   Shield, Users, CheckCircle2, AlertCircle, Award,
   BarChart3, TrendingUp, Download, Filter, Building2,
+  AlertTriangle, BookOpen, ChevronDown, ChevronRight, ExternalLink,
 } from "lucide-react";
 import type { AssessmentResult } from "@shared/schema";
 
+interface SectionScore {
+  moduleId: string;
+  title: string;
+  correct: number;
+  total: number;
+  percent: number;
+}
+
+// Map quiz section moduleIds to platform routes
+const MODULE_ROUTES: Record<string, string> = {
+  general: "/module/general",
+  plateful: "/module/plateful",
+  mealcard: "/module/mealcard",
+  tableside: "/module/tableside",
+  dininghub: "/module/dininghub",
+  "resident-customization": "/resident-guide",
+};
+
+function parseSectionBreakdown(raw: string | null | undefined): SectionScore[] {
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+
 export default function ManagerDashboard() {
   const [communityFilter, setCommunityFilter] = useState<string>("all");
+  const [expandedRemediation, setExpandedRemediation] = useState<number | null>(null);
 
   const { data: assessments = [] } = useQuery<AssessmentResult[]>({
     queryKey: ["/api/assessments"],
   });
 
-  // Extract unique communities from assessment data
+  // Extract unique communities
   const activeCommunities = useMemo(() => {
     const communities = new Set<string>();
     assessments.forEach(a => {
@@ -33,7 +63,7 @@ export default function ManagerDashboard() {
     return Array.from(communities).sort();
   }, [assessments]);
 
-  // Filtered assessments
+  // Filtered
   const filteredAssessments = useMemo(() => {
     if (communityFilter === "all") return assessments;
     return assessments.filter(a => (a as any).community === communityFilter);
@@ -51,6 +81,25 @@ export default function ManagerDashboard() {
   const passRate = filteredAssessments.length > 0
     ? Math.round((filteredAssessments.filter(a => a.passed).length / filteredAssessments.length) * 100)
     : 0;
+
+  // Remediation: staff who failed (most recent attempt only, not yet passed)
+  const remediationNeeded = useMemo(() => {
+    // Group by person, get latest result
+    const latestByPerson = new Map<string, AssessmentResult>();
+    const hasPassed = new Set<string>();
+    filteredAssessments.forEach(a => {
+      const key = a.staffName.toLowerCase().trim();
+      if (a.passed) hasPassed.add(key);
+      const existing = latestByPerson.get(key);
+      if (!existing || new Date(a.completedAt) > new Date(existing.completedAt)) {
+        latestByPerson.set(key, a);
+      }
+    });
+    // Only include people whose latest attempt failed AND who have never passed
+    return Array.from(latestByPerson.values())
+      .filter(a => !a.passed && !hasPassed.has(a.staffName.toLowerCase().trim()))
+      .sort((a, b) => a.scorePercent - b.scorePercent);
+  }, [filteredAssessments]);
 
   // Community breakdown
   const communityBreakdown = useMemo(() => {
@@ -77,8 +126,10 @@ export default function ManagerDashboard() {
   }, [assessments, communityFilter]);
 
   function exportCSV() {
-    const rows = [["Name", "Title", "Community", "Score", "Result", "Certificate ID", "Date"]];
+    const rows = [["Name", "Title", "Community", "Score", "Result", "Certificate ID", "Date", "Weak Modules"]];
     filteredAssessments.forEach(r => {
+      const sections = parseSectionBreakdown((r as any).sectionBreakdown);
+      const weakModules = sections.filter(s => s.percent < 80).map(s => s.title).join("; ");
       rows.push([
         r.staffName,
         (r as any).staffTitle || "",
@@ -87,6 +138,7 @@ export default function ManagerDashboard() {
         r.passed ? "Passed" : "Needs Review",
         r.certificateId || "",
         new Date(r.completedAt).toLocaleDateString(),
+        weakModules || "None",
       ]);
     });
     const csv = rows.map(r => r.map(c => `"${c}"`).join(",")).join("\n");
@@ -176,7 +228,118 @@ export default function ManagerDashboard() {
         </Card>
       </div>
 
-      {/* Community breakdown (only when viewing all and multiple communities exist) */}
+      {/* Remediation section */}
+      {remediationNeeded.length > 0 && (
+        <div>
+          <h2 className="font-semibold text-sm mb-3 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-orange-500" />
+            Remediation Needed
+            <Badge variant="secondary" className="text-[10px] bg-orange-100 text-orange-700 border-orange-200">
+              {remediationNeeded.length} {remediationNeeded.length === 1 ? "person" : "people"}
+            </Badge>
+          </h2>
+          <div className="space-y-2">
+            {remediationNeeded.map(result => {
+              const sections = parseSectionBreakdown((result as any).sectionBreakdown);
+              const weakSections = sections.filter(s => s.percent < 80);
+              const isExpanded = expandedRemediation === result.id;
+
+              return (
+                <Card
+                  key={result.id}
+                  className="overflow-hidden border-orange-200 dark:border-orange-900"
+                  data-testid={`remediation-${result.id}`}
+                >
+                  <button
+                    onClick={() => setExpandedRemediation(isExpanded ? null : result.id)}
+                    className="w-full p-4 flex items-center gap-3 text-left hover:bg-orange-50/50 dark:hover:bg-orange-950/10 transition-colors"
+                  >
+                    <div className="w-2.5 h-2.5 rounded-full bg-orange-400 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-medium">{result.staffName}</span>
+                        <Badge variant="secondary" className="text-[9px] bg-orange-50 text-orange-600 border-orange-200">
+                          {result.scorePercent}% — Below 80%
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
+                        {(result as any).staffTitle && <span>{(result as any).staffTitle}</span>}
+                        {(result as any).staffTitle && (result as any).community && <span>·</span>}
+                        {(result as any).community && <span>{(result as any).community}</span>}
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0 mr-1">
+                      {weakSections.length > 0 ? (
+                        <div className="text-xs text-orange-600 font-medium">
+                          {weakSections.length} {weakSections.length === 1 ? "module" : "modules"} to review
+                        </div>
+                      ) : (
+                        <div className="text-xs text-muted-foreground">No breakdown available</div>
+                      )}
+                    </div>
+                    {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" /> : <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
+                  </button>
+
+                  {isExpanded && (
+                    <div className="border-t border-orange-200 dark:border-orange-900 bg-orange-50/30 dark:bg-orange-950/10 p-4">
+                      {sections.length > 0 ? (
+                        <>
+                          <div className="text-xs font-semibold text-muted-foreground mb-3">Section Performance</div>
+                          <div className="space-y-2 mb-4">
+                            {sections.map(s => {
+                              const isWeak = s.percent < 80;
+                              const route = MODULE_ROUTES[s.moduleId];
+                              return (
+                                <div key={s.moduleId} className={`flex items-center gap-3 p-2.5 rounded-lg ${isWeak ? "bg-orange-100/60 dark:bg-orange-950/20" : "bg-background"}`}>
+                                  {isWeak ? (
+                                    <AlertCircle className="w-4 h-4 text-orange-500 shrink-0" />
+                                  ) : (
+                                    <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-medium">{s.title}</div>
+                                    <div className="text-xs text-muted-foreground">{s.correct}/{s.total} correct</div>
+                                  </div>
+                                  <span className={`text-sm font-semibold shrink-0 ${isWeak ? "text-orange-600" : "text-green-600"}`}>
+                                    {s.percent}%
+                                  </span>
+                                  {isWeak && route && (
+                                    <Link href={route}>
+                                      <Button variant="outline" size="sm" className="text-xs h-7 border-orange-300 text-orange-700 hover:bg-orange-100">
+                                        <BookOpen className="w-3 h-3 mr-1" />
+                                        Review
+                                      </Button>
+                                    </Link>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                          {weakSections.length > 0 && (
+                            <div className="bg-background rounded-lg p-3 flex items-start gap-2">
+                              <BookOpen className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
+                              <p className="text-xs text-muted-foreground leading-relaxed">
+                                Direct {result.staffName.split(" ")[0]} to review the flagged modules above before retaking the assessment.
+                                Each "Review" link opens the corresponding training module with videos and guides.
+                              </p>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">
+                          Section-level breakdown not available for this attempt. The employee should retake the assessment to generate detailed remediation data.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Community breakdown */}
       {communityFilter === "all" && communityBreakdown.length > 1 && (
         <div>
           <h2 className="font-semibold text-sm mb-3 flex items-center gap-2">
