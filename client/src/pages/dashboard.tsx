@@ -107,7 +107,7 @@ export default function Dashboard() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold text-sm">{mod.title}</h3>
-                        <Badge variant="secondary" className="text-[10px] shrink-0">{mod.lessons.length} lessons</Badge>
+                        <Badge variant="secondary" className="text-[10px] shrink-0">{mod.lessons.length} {mod.lessons.length === 1 ? 'lesson' : 'lessons'}</Badge>
                       </div>
                       <p className="text-xs text-muted-foreground line-clamp-1">{mod.description}</p>
                       <div className="flex items-center gap-3 mt-2">
