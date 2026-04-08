@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getCommunityOptions } from "@/lib/plc-communities";
+import { plcCommunities } from "@/lib/plc-communities";
 import {
   ClipboardCheck, CheckCircle2, XCircle, ChevronRight, ChevronDown,
   RotateCcw, Trophy, BookOpen, AlertCircle, Eye, ArrowRight, ArrowLeft, Award,
@@ -155,7 +155,6 @@ export default function KnowledgeChecks() {
   // INTRO STATE
   if (quizState === "intro") {
     const canStart = staffName.trim().length >= 2 && staffTitle.length > 0 && staffCommunity.length > 0;
-    const communityOptions = getCommunityOptions();
 
     return (
       <div className="p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
@@ -215,8 +214,8 @@ export default function KnowledgeChecks() {
                     <SelectValue placeholder="Select your community" />
                   </SelectTrigger>
                   <SelectContent className="max-h-[280px]">
-                    {communityOptions.map(opt => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    {plcCommunities.map(name => (
+                      <SelectItem key={name} value={name}>{name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
