@@ -61,7 +61,7 @@ export function registerRoutes(server: Server, app: Express) {
   });
 
   app.post("/api/assessments", (req, res) => {
-    const { staffId, staffName, score, totalQuestions, scorePercent, passed } = req.body;
+    const { staffId, staffName, staffTitle, community, score, totalQuestions, scorePercent, passed } = req.body;
     if (!staffName || score === undefined || !totalQuestions) {
       return res.status(400).json({ error: "staffName, score, and totalQuestions required" });
     }
@@ -69,6 +69,8 @@ export function registerRoutes(server: Server, app: Express) {
     const result = storage.addAssessmentResult({
       staffId: staffId || 0,
       staffName,
+      staffTitle: staffTitle || "",
+      community: community || "",
       score,
       totalQuestions,
       scorePercent,

@@ -26,6 +26,7 @@ type QuizState = "intro" | "active" | "results";
 export default function KnowledgeChecks() {
   const [quizState, setQuizState] = useState<QuizState>("intro");
   const [staffName, setStaffName] = useState("");
+  const [staffTitle, setStaffTitle] = useState("");
   const [staffCommunity, setStaffCommunity] = useState("");
   const [answers, setAnswers] = useState<Map<string, number>>(new Map());
   const [currentSectionIdx, setCurrentSectionIdx] = useState(0);
@@ -108,7 +109,8 @@ export default function KnowledgeChecks() {
       const resp = await apiRequest("POST", "/api/assessments", {
         staffId: 0,
         staffName: staffName.trim(),
-        community: staffCommunity.trim(),
+        staffTitle: staffTitle,
+        community: staffCommunity,
         score,
         totalQuestions,
         scorePercent,
@@ -152,7 +154,7 @@ export default function KnowledgeChecks() {
 
   // INTRO STATE
   if (quizState === "intro") {
-    const canStart = staffName.trim().length >= 2 && staffCommunity.length > 0;
+    const canStart = staffName.trim().length >= 2 && staffTitle.length > 0 && staffCommunity.length > 0;
     const communityOptions = getCommunityOptions();
 
     return (
@@ -172,7 +174,7 @@ export default function KnowledgeChecks() {
         {/* Name entry */}
         <Card className="border-l-4 border-l-primary">
           <CardContent className="p-5">
-            <div className="grid gap-4 sm:grid-cols-2 mb-4">
+            <div className="grid gap-4 sm:grid-cols-3 mb-4">
               <div>
                 <Label htmlFor="staff-name" className="text-sm font-semibold mb-2 block">Your Full Name</Label>
                 <Input
@@ -182,6 +184,25 @@ export default function KnowledgeChecks() {
                   onChange={(e) => setStaffName(e.target.value)}
                   data-testid="input-staff-name"
                 />
+              </div>
+              <div>
+                <Label htmlFor="staff-title" className="text-sm font-semibold mb-2 block">Your Title</Label>
+                <Select value={staffTitle} onValueChange={setStaffTitle}>
+                  <SelectTrigger id="staff-title" data-testid="select-staff-title">
+                    <SelectValue placeholder="Select your title" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Dining Services Director">Dining Services Director</SelectItem>
+                    <SelectItem value="Dietary Manager">Dietary Manager</SelectItem>
+                    <SelectItem value="Head Cook / Chef">Head Cook / Chef</SelectItem>
+                    <SelectItem value="Cook">Cook</SelectItem>
+                    <SelectItem value="Dining Service Aide">Dining Service Aide</SelectItem>
+                    <SelectItem value="Server">Server</SelectItem>
+                    <SelectItem value="Dietitian / RD">Dietitian / RD</SelectItem>
+                    <SelectItem value="Executive Director">Executive Director</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="staff-community" className="text-sm font-semibold mb-2 block">Community Location</Label>
@@ -198,7 +219,7 @@ export default function KnowledgeChecks() {
               </div>
             </div>
             <p className="text-xs text-muted-foreground mb-4">
-              Both fields are required and will appear on your completion certificate if you pass.
+              All fields are required and will appear on your completion certificate if you pass.
             </p>
 
             <h2 className="font-semibold text-sm mb-3">Assessment Overview</h2>
@@ -482,6 +503,7 @@ export default function KnowledgeChecks() {
       {showCertificate && passed && certificateId && (
         <CompletionCertificate
           staffName={staffName}
+          staffTitle={staffTitle}
           community={staffCommunity}
           scorePercent={scorePercent}
           score={score}

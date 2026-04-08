@@ -22,6 +22,8 @@ export const assessmentResults = sqliteTable("assessment_results", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   staffId: integer("staff_id").notNull(),
   staffName: text("staff_name").notNull(),
+  staffTitle: text("staff_title").notNull().default(""),
+  community: text("community").notNull().default(""),
   score: integer("score").notNull(),
   totalQuestions: integer("total_questions").notNull(),
   scorePercent: integer("score_percent").notNull(),

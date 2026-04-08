@@ -33,6 +33,8 @@ sqlite.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     staff_id INTEGER NOT NULL,
     staff_name TEXT NOT NULL,
+    staff_title TEXT NOT NULL DEFAULT '',
+    community TEXT NOT NULL DEFAULT '',
     score INTEGER NOT NULL,
     total_questions INTEGER NOT NULL,
     score_percent INTEGER NOT NULL,
@@ -41,3 +43,7 @@ sqlite.exec(`
     certificate_id TEXT
   )
 `);
+
+// Add columns if they don't exist (for existing databases)
+try { sqlite.exec(`ALTER TABLE assessment_results ADD COLUMN staff_title TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE assessment_results ADD COLUMN community TEXT NOT NULL DEFAULT ''`); } catch {}
