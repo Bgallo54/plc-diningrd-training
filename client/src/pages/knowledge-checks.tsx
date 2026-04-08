@@ -3,32 +3,34 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   ClipboardCheck, CheckCircle2, XCircle, ChevronRight, ChevronDown,
-  RotateCcw, Trophy, BookOpen, AlertCircle, Eye, ArrowRight, ArrowLeft,
+  RotateCcw, Trophy, BookOpen, AlertCircle, Eye, ArrowRight, ArrowLeft, Award,
 } from "lucide-react";
 import { quizSections, getTotalQuestions, getPassingScore, type QuizQuestion } from "@/lib/quiz-data";
+import { CompletionCertificate } from "@/components/completion-certificate";
+import { apiRequest } from "@/lib/queryClient";
 
 type QuizState = "intro" | "active" | "results";
 
-interface Answer {
-  questionId: string;
-  selectedIndex: number;
-}
-
 export default function KnowledgeChecks() {
   const [quizState, setQuizState] = useState<QuizState>("intro");
+  const [staffName, setStaffName] = useState("");
   const [answers, setAnswers] = useState<Map<string, number>>(new Map());
   const [currentSectionIdx, setCurrentSectionIdx] = useState(0);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [showReview, setShowReview] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [showCertificate, setShowCertificate] = useState(false);
+  const [certificateId, setCertificateId] = useState("");
+  const [completedAt, setCompletedAt] = useState("");
 
   const allQuestions = useMemo(() => quizSections.flatMap(s => s.questions), []);
   const totalQuestions = getTotalQuestions();
   const passingScore = getPassingScore();
 
-  // Flat index across all sections
   const flatQuestions = useMemo(() => {
     const flat: { question: QuizQuestion; sectionIdx: number; localIdx: number }[] = [];
     quizSections.forEach((section, si) => {
@@ -74,20 +76,6 @@ export default function KnowledgeChecks() {
     }
   }
 
-  function submitQuiz() {
-    setQuizState("results");
-    setShowReview(false);
-  }
-
-  function resetQuiz() {
-    setAnswers(new Map());
-    setCurrentSectionIdx(0);
-    setCurrentQuestionIdx(0);
-    setQuizState("intro");
-    setShowReview(false);
-    setExpandedSection(null);
-  }
-
   const score = useMemo(() => {
     let correct = 0;
     allQuestions.forEach(q => {
@@ -100,7 +88,43 @@ export default function KnowledgeChecks() {
   const scorePercent = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
   const passed = scorePercent >= passingScore;
 
-  // Section scores for results breakdown
+  async function submitQuiz() {
+    setQuizState("results");
+    setShowReview(false);
+    const now = new Date().toISOString();
+    setCompletedAt(now);
+
+    // Save assessment result to backend
+    try {
+      const resp = await apiRequest("POST", "/api/assessments", {
+        staffId: 0,
+        staffName: staffName.trim(),
+        score,
+        totalQuestions,
+        scorePercent,
+        passed,
+      });
+      const data = await resp.json();
+      if (data.certificateId) {
+        setCertificateId(data.certificateId);
+      }
+    } catch {
+      // Generate certificate ID client-side as fallback
+      setCertificateId(`PLC-DR-${Date.now().toString(36).toUpperCase()}`);
+    }
+  }
+
+  function resetQuiz() {
+    setAnswers(new Map());
+    setCurrentSectionIdx(0);
+    setCurrentQuestionIdx(0);
+    setQuizState("intro");
+    setShowReview(false);
+    setShowCertificate(false);
+    setExpandedSection(null);
+    setCertificateId("");
+  }
+
   const sectionScores = useMemo(() => {
     return quizSections.map(section => {
       let correct = 0;
@@ -118,6 +142,8 @@ export default function KnowledgeChecks() {
 
   // INTRO STATE
   if (quizState === "intro") {
+    const canStart = staffName.trim().length >= 2;
+
     return (
       <div className="p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
         <div className="flex items-start gap-4">
@@ -132,8 +158,24 @@ export default function KnowledgeChecks() {
           </div>
         </div>
 
+        {/* Name entry */}
         <Card className="border-l-4 border-l-primary">
           <CardContent className="p-5">
+            <div className="mb-4">
+              <Label htmlFor="staff-name" className="text-sm font-semibold mb-2 block">Your Name</Label>
+              <Input
+                id="staff-name"
+                placeholder="Enter your full name"
+                value={staffName}
+                onChange={(e) => setStaffName(e.target.value)}
+                className="max-w-sm"
+                data-testid="input-staff-name"
+              />
+              <p className="text-xs text-muted-foreground mt-1.5">
+                This will appear on your completion certificate if you pass.
+              </p>
+            </div>
+
             <h2 className="font-semibold text-sm mb-3">Assessment Overview</h2>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
               <div className="text-center p-3 bg-muted/50 rounded-lg">
@@ -155,7 +197,7 @@ export default function KnowledgeChecks() {
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
               This assessment covers all five DiningRD training modules plus resident customization principles.
-              You'll receive your score immediately and can review the answer key with detailed explanations for every question.
+              Score 80% or higher to earn your completion certificate.
             </p>
           </CardContent>
         </Card>
@@ -180,7 +222,7 @@ export default function KnowledgeChecks() {
         </div>
 
         <div className="flex justify-center pt-2">
-          <Button size="lg" onClick={() => setQuizState("active")} data-testid="button-start-quiz">
+          <Button size="lg" onClick={() => setQuizState("active")} disabled={!canStart} data-testid="button-start-quiz">
             <ClipboardCheck className="w-4 h-4 mr-2" />
             Begin Assessment
           </Button>
@@ -194,7 +236,6 @@ export default function KnowledgeChecks() {
     const section = quizSections[currentQuestion.sectionIdx];
     const q = currentQuestion.question;
     const selectedAnswer = answers.get(q.id);
-    const isAnswered = selectedAnswer !== undefined;
 
     return (
       <div className="p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
@@ -364,7 +405,7 @@ export default function KnowledgeChecks() {
               {score} of {totalQuestions} correct
             </div>
             <div className={`text-sm font-medium ${passed ? "text-green-600 dark:text-green-400" : "text-orange-600 dark:text-orange-400"}`}>
-              {passed ? "Congratulations — you passed!" : `You need ${passingScore}% to pass. Review the material and try again.`}
+              {passed ? `Congratulations, ${staffName.split(" ")[0]} — you passed!` : `You need ${passingScore}% to pass. Review the material and try again.`}
             </div>
           </div>
         </CardContent>
@@ -396,6 +437,12 @@ export default function KnowledgeChecks() {
 
       {/* Actions */}
       <div className="flex flex-wrap gap-3 justify-center">
+        {passed && certificateId && (
+          <Button onClick={() => setShowCertificate(!showCertificate)} data-testid="button-toggle-cert">
+            <Award className="w-4 h-4 mr-2" />
+            {showCertificate ? "Hide Certificate" : "View Certificate"}
+          </Button>
+        )}
         <Button variant="outline" onClick={() => setShowReview(!showReview)} data-testid="button-toggle-answer-key">
           <Eye className="w-4 h-4 mr-2" />
           {showReview ? "Hide Answer Key" : "View Answer Key"}
@@ -405,6 +452,18 @@ export default function KnowledgeChecks() {
           Retake Assessment
         </Button>
       </div>
+
+      {/* Certificate */}
+      {showCertificate && passed && certificateId && (
+        <CompletionCertificate
+          staffName={staffName}
+          scorePercent={scorePercent}
+          score={score}
+          totalQuestions={totalQuestions}
+          completedAt={completedAt}
+          certificateId={certificateId}
+        />
+      )}
 
       {/* Answer key review */}
       {showReview && (
@@ -445,9 +504,7 @@ export default function KnowledgeChecks() {
                               <XCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
                             )}
                             <div>
-                              <span className="text-xs text-muted-foreground font-medium">
-                                Q{qIdx + 1}.
-                              </span>{" "}
+                              <span className="text-xs text-muted-foreground font-medium">Q{qIdx + 1}.</span>{" "}
                               <span className="text-sm font-medium">{q.question}</span>
                             </div>
                           </div>

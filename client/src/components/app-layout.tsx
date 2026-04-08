@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, UtensilsCrossed, ClipboardList, Tablet, BookOpen, GraduationCap, Users, Menu, X, ChevronRight, ClipboardCheck } from "lucide-react";
+import { Home, UtensilsCrossed, ClipboardList, Tablet, BookOpen, GraduationCap, Users, Menu, X, ChevronRight, ClipboardCheck, Shield } from "lucide-react";
 import { useState } from "react";
 import { modules } from "@/lib/training-data";
 import plcLogo from "@assets/plc-logo.jpg";
@@ -21,6 +21,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     })),
     { href: "/resident-guide", label: "Resident Customization", icon: Users },
     { href: "/knowledge-checks", label: "Knowledge Checks", icon: ClipboardCheck },
+    { href: "/manager", label: "Manager Dashboard", icon: Shield },
   ];
 
   return (
@@ -55,10 +56,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
               const Icon = item.icon;
               const isAssessment = item.href === "/knowledge-checks";
+              const isManager = item.href === "/manager";
               return (
                 <li key={item.href}>
                   {isAssessment && (
                     <div className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/40 px-3 mt-4 mb-2">Assessment</div>
+                  )}
+                  {isManager && (
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/40 px-3 mt-4 mb-2">Management</div>
                   )}
                   <Link href={item.href} onClick={() => setMobileOpen(false)}>
                     <div className={`

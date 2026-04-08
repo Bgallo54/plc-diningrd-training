@@ -10,6 +10,34 @@ export const trainingProgress = sqliteTable("training_progress", {
   completedAt: text("completed_at"),
 });
 
+export const staffMembers = sqliteTable("staff_members", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  role: text("role").notNull(),
+  community: text("community").notNull().default(""),
+  addedAt: text("added_at").notNull(),
+});
+
+export const assessmentResults = sqliteTable("assessment_results", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  staffId: integer("staff_id").notNull(),
+  staffName: text("staff_name").notNull(),
+  score: integer("score").notNull(),
+  totalQuestions: integer("total_questions").notNull(),
+  scorePercent: integer("score_percent").notNull(),
+  passed: integer("passed", { mode: "boolean" }).notNull(),
+  completedAt: text("completed_at").notNull(),
+  certificateId: text("certificate_id"),
+});
+
 export const insertTrainingProgressSchema = createInsertSchema(trainingProgress).omit({ id: true });
 export type InsertTrainingProgress = z.infer<typeof insertTrainingProgressSchema>;
 export type TrainingProgress = typeof trainingProgress.$inferSelect;
+
+export const insertStaffMemberSchema = createInsertSchema(staffMembers).omit({ id: true });
+export type InsertStaffMember = z.infer<typeof insertStaffMemberSchema>;
+export type StaffMember = typeof staffMembers.$inferSelect;
+
+export const insertAssessmentResultSchema = createInsertSchema(assessmentResults).omit({ id: true });
+export type InsertAssessmentResult = z.infer<typeof insertAssessmentResultSchema>;
+export type AssessmentResult = typeof assessmentResults.$inferSelect;
