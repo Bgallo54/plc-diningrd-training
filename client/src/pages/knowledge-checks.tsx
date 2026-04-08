@@ -192,14 +192,18 @@ export default function KnowledgeChecks() {
                     <SelectValue placeholder="Select your title" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="Regional Vice President">Regional Vice President</SelectItem>
+                    <SelectItem value="Regional Director of Operations">Regional Director of Operations</SelectItem>
+                    <SelectItem value="Executive Director">Executive Director</SelectItem>
                     <SelectItem value="Dining Services Director">Dining Services Director</SelectItem>
                     <SelectItem value="Dietary Manager">Dietary Manager</SelectItem>
+                    <SelectItem value="Life Enrichment Director">Life Enrichment Director</SelectItem>
+                    <SelectItem value="Memory Care Director">Memory Care Director</SelectItem>
                     <SelectItem value="Head Cook / Chef">Head Cook / Chef</SelectItem>
                     <SelectItem value="Cook">Cook</SelectItem>
                     <SelectItem value="Dining Service Aide">Dining Service Aide</SelectItem>
                     <SelectItem value="Server">Server</SelectItem>
                     <SelectItem value="Dietitian / RD">Dietitian / RD</SelectItem>
-                    <SelectItem value="Executive Director">Executive Director</SelectItem>
                     <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
