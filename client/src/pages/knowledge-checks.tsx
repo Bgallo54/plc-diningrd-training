@@ -6,6 +6,14 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { getCommunityOptions } from "@/lib/plc-communities";
+import {
   ClipboardCheck, CheckCircle2, XCircle, ChevronRight, ChevronDown,
   RotateCcw, Trophy, BookOpen, AlertCircle, Eye, ArrowRight, ArrowLeft, Award,
 } from "lucide-react";
@@ -144,7 +152,8 @@ export default function KnowledgeChecks() {
 
   // INTRO STATE
   if (quizState === "intro") {
-    const canStart = staffName.trim().length >= 2 && staffCommunity.trim().length >= 2;
+    const canStart = staffName.trim().length >= 2 && staffCommunity.length > 0;
+    const communityOptions = getCommunityOptions();
 
     return (
       <div className="p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
@@ -176,13 +185,16 @@ export default function KnowledgeChecks() {
               </div>
               <div>
                 <Label htmlFor="staff-community" className="text-sm font-semibold mb-2 block">Community Location</Label>
-                <Input
-                  id="staff-community"
-                  placeholder="e.g. Sunrise Village"
-                  value={staffCommunity}
-                  onChange={(e) => setStaffCommunity(e.target.value)}
-                  data-testid="input-staff-community"
-                />
+                <Select value={staffCommunity} onValueChange={setStaffCommunity}>
+                  <SelectTrigger id="staff-community" data-testid="select-staff-community">
+                    <SelectValue placeholder="Select your community" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[280px]">
+                    {communityOptions.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <p className="text-xs text-muted-foreground mb-4">
