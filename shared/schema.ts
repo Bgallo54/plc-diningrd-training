@@ -33,6 +33,15 @@ export const assessmentResults = sqliteTable("assessment_results", {
   sectionBreakdown: text("section_breakdown"),
 });
 
+export const adminUsers = sqliteTable("admin_users", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  pin: text("pin").notNull(),
+  role: text("role").notNull().default("admin"),
+  createdAt: text("created_at").notNull(),
+});
+
 export const insertTrainingProgressSchema = createInsertSchema(trainingProgress).omit({ id: true });
 export type InsertTrainingProgress = z.infer<typeof insertTrainingProgressSchema>;
 export type TrainingProgress = typeof trainingProgress.$inferSelect;
@@ -44,3 +53,7 @@ export type StaffMember = typeof staffMembers.$inferSelect;
 export const insertAssessmentResultSchema = createInsertSchema(assessmentResults).omit({ id: true });
 export type InsertAssessmentResult = z.infer<typeof insertAssessmentResultSchema>;
 export type AssessmentResult = typeof assessmentResults.$inferSelect;
+
+export const insertAdminUserSchema = createInsertSchema(adminUsers).omit({ id: true });
+export type InsertAdminUser = z.infer<typeof insertAdminUserSchema>;
+export type AdminUser = typeof adminUsers.$inferSelect;

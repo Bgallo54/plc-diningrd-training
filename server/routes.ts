@@ -81,4 +81,74 @@ export function registerRoutes(server: Server, app: Express) {
     });
     res.json(result);
   });
+
+  // Admin authentication
+  app.post("/api/admin/login", (req, res) => {
+    const { email, pin } = req.body;
+    if (!email || !pin) {
+      return res.status(400).json({ error: "email and pin required" });
+    }
+    const admin = storage.verifyAdmin(email, pin);
+    if (!admin) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+    // Return admin info (excluding pin)
+    const { pin: _pin, ...safeAdmin } = admin;
+    res.json(safeAdmin);
+  });
+
+  // Admin management (requires super-admin verification via header)
+  app.get("/api/admin/users", (req, res) => {
+    const authEmail = req.headers["x-admin-email"] as string;
+    const authPin = req.headers["x-admin-pin"] as string;
+    const admin = storage.verifyAdmin(authEmail || "", authPin || "");
+    if (!admin || admin.role !== "super-admin") {
+      return res.status(403).json({ error: "Super-admin access required" });
+    }
+    const users = storage.getAdminUsers().map(({ pin, ...u }) => u);
+    res.json(users);
+  });
+
+  app.post("/api/admin/users", (req, res) => {
+    const authEmail = req.headers["x-admin-email"] as string;
+    const authPin = req.headers["x-admin-pin"] as string;
+    const admin = storage.verifyAdmin(authEmail || "", authPin || "");
+    if (!admin || admin.role !== "super-admin") {
+      return res.status(403).json({ error: "Super-admin access required" });
+    }
+    const { name, email, pin, role } = req.body;
+    if (!name || !email || !pin) {
+      return res.status(400).json({ error: "name, email, and pin required" });
+    }
+    const existing = storage.getAdminByEmail(email);
+    if (existing) {
+      return res.status(409).json({ error: "An admin with this email already exists" });
+    }
+    const newAdmin = storage.addAdminUser({
+      name,
+      email: email.toLowerCase().trim(),
+      pin,
+      role: role || "admin",
+      createdAt: new Date().toISOString(),
+    });
+    const { pin: _pin, ...safe } = newAdmin;
+    res.json(safe);
+  });
+
+  app.delete("/api/admin/users/:id", (req, res) => {
+    const authEmail = req.headers["x-admin-email"] as string;
+    const authPin = req.headers["x-admin-pin"] as string;
+    const admin = storage.verifyAdmin(authEmail || "", authPin || "");
+    if (!admin || admin.role !== "super-admin") {
+      return res.status(403).json({ error: "Super-admin access required" });
+    }
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: "invalid id" });
+    // Prevent deleting yourself
+    if (admin.id === id) {
+      return res.status(400).json({ error: "Cannot remove yourself" });
+    }
+    storage.removeAdminUser(id);
+    res.json({ success: true });
+  });
 }

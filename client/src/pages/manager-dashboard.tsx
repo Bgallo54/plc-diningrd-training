@@ -15,9 +15,11 @@ import {
 import {
   Shield, Users, CheckCircle2, AlertCircle, Award,
   BarChart3, TrendingUp, Download, Filter, Building2,
-  AlertTriangle, BookOpen, ChevronDown, ChevronRight, ExternalLink,
+  AlertTriangle, BookOpen, ChevronDown, ChevronRight, ExternalLink, LogOut,
 } from "lucide-react";
 import type { AssessmentResult } from "@shared/schema";
+import { AdminGate, useAdmin } from "@/components/admin-gate";
+import { AdminManagement } from "@/components/admin-management";
 
 interface SectionScore {
   moduleId: string;
@@ -47,6 +49,15 @@ function parseSectionBreakdown(raw: string | null | undefined): SectionScore[] {
 }
 
 export default function ManagerDashboard() {
+  return (
+    <AdminGate>
+      <ManagerDashboardContent />
+    </AdminGate>
+  );
+}
+
+function ManagerDashboardContent() {
+  const { admin, logout } = useAdmin();
   const [communityFilter, setCommunityFilter] = useState<string>("all");
   const [expandedRemediation, setExpandedRemediation] = useState<number | null>(null);
 
@@ -163,6 +174,13 @@ export default function ManagerDashboard() {
           <p className="text-sm text-muted-foreground mt-1">
             Track assessment scores and certification progress across your DiningRD training program.
           </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-xs text-muted-foreground hidden sm:inline">{admin.name}</span>
+          <Button variant="ghost" size="sm" onClick={logout} className="text-xs h-8" data-testid="button-admin-logout">
+            <LogOut className="w-3.5 h-3.5 mr-1" />
+            Sign Out
+          </Button>
         </div>
       </div>
 
@@ -463,6 +481,8 @@ export default function ManagerDashboard() {
           </Card>
         )}
       </div>
+      {/* Admin management (super-admin only) */}
+      {admin.role === "super-admin" && <AdminManagement />}
     </div>
   );
 }

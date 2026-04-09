@@ -48,3 +48,22 @@ sqlite.exec(`
 try { sqlite.exec(`ALTER TABLE assessment_results ADD COLUMN staff_title TEXT NOT NULL DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE assessment_results ADD COLUMN community TEXT NOT NULL DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE assessment_results ADD COLUMN section_breakdown TEXT`); } catch {}
+
+sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS admin_users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    pin TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'admin',
+    created_at TEXT NOT NULL
+  )
+`);
+
+// Seed default super-admin if no admins exist
+const adminCount = sqlite.prepare('SELECT COUNT(*) as count FROM admin_users').get() as any;
+if (adminCount.count === 0) {
+  sqlite.prepare(
+    'INSERT INTO admin_users (name, email, pin, role, created_at) VALUES (?, ?, ?, ?, ?)'
+  ).run('Super Admin', 'admin@prioritylc.com', '2026', 'super-admin', new Date().toISOString());
+}

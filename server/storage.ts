@@ -2,6 +2,7 @@ import {
   trainingProgress, type TrainingProgress,
   staffMembers, type StaffMember, type InsertStaffMember,
   assessmentResults, type AssessmentResult, type InsertAssessmentResult,
+  adminUsers, type AdminUser, type InsertAdminUser,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
@@ -16,6 +17,11 @@ export interface IStorage {
   getAssessmentResults(): AssessmentResult[];
   getAssessmentResultsByStaff(staffId: number): AssessmentResult[];
   addAssessmentResult(result: InsertAssessmentResult): AssessmentResult;
+  getAdminUsers(): AdminUser[];
+  getAdminByEmail(email: string): AdminUser | undefined;
+  addAdminUser(admin: InsertAdminUser): AdminUser;
+  removeAdminUser(id: number): void;
+  verifyAdmin(email: string, pin: string): AdminUser | null;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -75,6 +81,33 @@ export class DatabaseStorage implements IStorage {
 
   addAssessmentResult(result: InsertAssessmentResult): AssessmentResult {
     return db.insert(assessmentResults).values(result).returning().get();
+  }
+
+  getAdminUsers(): AdminUser[] {
+    return db.select().from(adminUsers).all();
+  }
+
+  getAdminByEmail(email: string): AdminUser | undefined {
+    return db.select().from(adminUsers)
+      .where(eq(adminUsers.email, email.toLowerCase().trim()))
+      .get();
+  }
+
+  addAdminUser(admin: InsertAdminUser): AdminUser {
+    return db.insert(adminUsers).values({
+      ...admin,
+      email: admin.email.toLowerCase().trim(),
+    }).returning().get();
+  }
+
+  removeAdminUser(id: number): void {
+    db.delete(adminUsers).where(eq(adminUsers.id, id)).run();
+  }
+
+  verifyAdmin(email: string, pin: string): AdminUser | null {
+    const admin = this.getAdminByEmail(email);
+    if (admin && admin.pin === pin) return admin;
+    return null;
   }
 }
 
